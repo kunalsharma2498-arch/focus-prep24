@@ -17,6 +17,7 @@ import {
   Trash2, ChevronDown, ChevronRight, ClipboardList, Settings2
 } from "lucide-react";
 
+// ---------- PALETTE ----------
 const C = {
   paper: "#FAF9F4",
   paperRaised: "#FFFFFF",
@@ -36,6 +37,7 @@ const DISPLAY_FONT = "'Iowan Old Style', Georgia, serif";
 const BODY_FONT = "ui-sans-serif, -apple-system, sans-serif";
 const SUBJECT_PALETTE = ["#5B7B7A", "#C97B4A", "#7C6FA6", "#4B7CA6", "#5C8A63"];
 
+// ---------- HELPERS ----------
 function uid() { return Math.random().toString(36).slice(2, 10); }
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 
@@ -77,6 +79,7 @@ function colorForSubject(name, subjects) {
   return SUBJECT_PALETTE[(idx < 0 ? 0 : idx) % SUBJECT_PALETTE.length];
 }
 
+// ---------- STYLED COMPONENTS ----------
 const inputStyle = {
   border: `1px solid ${C.line}`,
   borderRadius: 8,
@@ -212,6 +215,7 @@ function K24Logo({ size = 40, withText = false }) {
   );
 }
 
+// ---------- AUTH ----------
 function Auth({ onAuth }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -270,6 +274,7 @@ function Auth({ onAuth }) {
   );
 }
 
+// ---------- HOOKS ----------
 function useCollection(collectionName, userId) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -332,6 +337,7 @@ async function updateLiveStatus(userId, data) {
   }, { merge: true });
 }
 
+// ---------- FRIEND LIVE STATUS ----------
 function FriendLiveStatus({ friendUID }) {
   const status = useLiveStatus(friendUID);
 
@@ -468,6 +474,7 @@ function FriendStatusBadge({ friendUID }) {
   );
 }
 
+// ---------- TASKS TAB ----------
 function TasksTab({ tasks, subjects, user, viewMode, setViewMode, friendUID }) {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
@@ -541,6 +548,7 @@ function TasksTab({ tasks, subjects, user, viewMode, setViewMode, friendUID }) {
   );
 }
 
+// ---------- TIMER TAB ----------
 function TimerTab({ focusLog, user, friendUID }) {
   const [timerSettings, setTimerSettings] = useState({ focusMinutes: 25, breakMinutes: 5 });
   const [mode, setMode] = useState("focus");
@@ -679,6 +687,7 @@ function FocusHoursSummary({ focusLog, range, setRange }) {
   );
 }
 
+// ---------- TESTS TAB ----------
 function TestsTab({ coachingTests, visibleSubjects, user }) {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -794,6 +803,7 @@ function TestsTab({ coachingTests, visibleSubjects, user }) {
   );
 }
 
+// ---------- PROGRESS TAB ----------
 function ProgressTab({ subjects, visibleSubjects, examFocus, mocks, user, viewMode, setViewMode, friendUID }) {
   const [openSubjectId, setOpenSubjectId] = useState(null);
   const [chapterInput, setChapterInput] = useState("");
@@ -967,6 +977,7 @@ function StatCard({ label, value }) {
   );
 }
 
+// ---------- NOTES TAB ----------
 function NotesTab({ notes, subjects, user }) {
   const [showForm, setShowForm] = useState(false);
   const [subject, setSubject] = useState(subjects[0]?.name || "General");
@@ -1018,6 +1029,7 @@ function NotesTab({ notes, subjects, user }) {
   );
 }
 
+// ---------- SETTINGS TAB ----------
 function SettingsTab({ user, friendUID, setFriendUID }) {
   const [inputUID, setInputUID] = useState(friendUID || "");
 
@@ -1059,5 +1071,274 @@ function SettingsTab({ user, friendUID, setFriendUID }) {
   );
 }
 
-// THIS IS THE ONLY export default - DO NOT ADD ANOTHER ONE
-export default App;
+// ---------- MAIN APP ----------
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [friendUID, setFriendUID] = useState(null);
+  const [viewMode, setViewMode] = useState("mine");
+  const [tab, setTab] = useState("tasks");
+  const [examFocus, setExamFocus] = useState("Both");
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        setUser(u);
+        const docSnap = await getDoc(doc(db, "users", u.uid));
+        if (docSnap.exists()) {
+          setFriendUID(docSnap.data().friendUID || null);
+        } else {
+          await setDoc(doc(db, "users", u.uid), { friendUID: null });
+        }
+      } else {
+        setUser(null);
+        setFriendUID(null);
+      }
+      setLoadingAuth(false);
+    });
+    return unsub;
+  }, []);
+
+  const myTasks = useCollection("tasks", user?.uid);
+  const myFocusLog = useCollection("focusLog", user?.uid);
+  const mySubjects = useCollection("subjects", user?.uid);
+  const myNotes = useCollection("notes", user?.uid);
+  const myMocks = useCollection("mocks", user?.uid);
+  const myCoachingTests = useCollection("coachingTests", user?.uid);
+
+  const friendTasks = useCollection("tasks", friendUID);
+  const friendFocusLog = useCollection("focusLog", friendUID);
+  const friendSubjects = useCollection("subjects", friendUID);
+  const friendNotes = useCollection("notes", friendUID);
+  const friendMocks = useCollection("mocks", friendUID);
+  const friendCoachingTests = useCollection("coachingTests", friendUID);
+
+  const tasks = viewMode === "friend" ? friendTasks.data : myTasks.data;
+  const focusLog = viewMode === "friend" ? friendFocusLog.data : myFocusLog.data;
+  const subjects = viewMode === "friend" ? friendSubjects.data : mySubjects.data;
+  const notes = viewMode === "friend" ? friendNotes.data : myNotes.data;
+  const mocks = viewMode === "friend" ? friendMocks.data : myMocks.data;
+  const coachingTests = viewMode === "friend" ? friendCoachingTests.data : myCoachingTests.data;
+
+  const visibleSubjects = subjects.filter(
+    (s) => examFocus === "Both" || !s.exam || s.exam === "Both" || s.exam === examFocus
+  );
+
+  if (loadingAuth) return <div style={{ padding: 40, textAlign: "center" }}>Loading…</div>;
+  if (!user) return <Auth onAuth={() => {}} />;
+
+  const tabs = [
+    { id: "tasks", label: "Tasks", icon: ListTodo },
+    { id: "timer", label: "Focus", icon: TimerIcon },
+    { id: "tests", label: "Tests", icon: ClipboardList },
+    { id: "progress", label: "Progress", icon: TrendingUp },
+    { id: "notes", label: "Notes", icon: NotebookPen },
+    { id: "settings", label: "Friends", icon: Settings2 },
+  ];
+
+  return (
+    <div style={{
+      fontFamily: BODY_FONT,
+      background: C.paper,
+      minHeight: "100vh",
+      color: C.ink,
+      position: "relative",
+      paddingBottom: 80
+    }}>
+      {/* K24 Watermark */}
+      <div style={{
+        position: "fixed",
+        bottom: 70,
+        right: 16,
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        userSelect: "none",
+        pointerEvents: "none",
+        opacity: 0.25,
+        zIndex: 999,
+      }}>
+        <div style={{
+          width: 28,
+          height: 28,
+          borderRadius: "50%",
+          background: `linear-gradient(135deg, ${C.sage}, ${C.gold})`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
+          <span style={{
+            fontFamily: DISPLAY_FONT,
+            fontSize: 10,
+            fontWeight: "bold",
+            color: "#FFFFFF",
+            letterSpacing: -0.5,
+          }}>
+            K24
+          </span>
+        </div>
+        <span style={{
+          fontFamily: DISPLAY_FONT,
+          fontSize: 10,
+          color: C.inkSoft,
+          letterSpacing: 0.5,
+        }}>
+          Focus Prep
+        </span>
+      </div>
+
+      {/* K24 Logo - Top Left */}
+      <div style={{
+        position: "fixed",
+        top: 12,
+        left: 12,
+        zIndex: 100,
+        opacity: 0.6,
+      }}>
+        <div style={{
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          background: `linear-gradient(135deg, ${C.sage}, ${C.gold})`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 2px 8px rgba(91, 123, 122, 0.2)",
+        }}>
+          <span style={{
+            fontFamily: DISPLAY_FONT,
+            fontSize: 12,
+            fontWeight: "bold",
+            color: "#FFFFFF",
+            letterSpacing: -0.5,
+          }}>
+            K24
+          </span>
+        </div>
+      </div>
+
+      <header style={{ padding: "20px 18px 14px", borderBottom: `1px solid ${C.line}`, paddingLeft: 56 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <div style={{ fontFamily: DISPLAY_FONT, fontSize: 22, letterSpacing: 0.2, display: "flex", alignItems: "center", gap: 8 }}>
+              <span>Focus Prep</span>
+              <span style={{
+                fontSize: 11,
+                color: C.sage,
+                background: C.sageSoft,
+                padding: "2px 8px",
+                borderRadius: 12,
+                fontWeight: "normal",
+              }}>
+                K24
+              </span>
+            </div>
+            <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2 }}>
+              {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+              {friendUID && viewMode === "friend" && (
+                <span style={{
+                  marginLeft: 8,
+                  background: C.sageSoft,
+                  padding: "2px 8px",
+                  borderRadius: 12,
+                  fontSize: 11,
+                  color: C.sage
+                }}>
+                  Friend view
+                </span>
+              )}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {friendUID && <FriendStatusBadge friendUID={friendUID} />}
+            <button
+              onClick={() => signOut(auth)}
+              style={{
+                background: "none",
+                border: `1px solid ${C.line}`,
+                borderRadius: 20,
+                padding: "4px 12px",
+                fontSize: 12,
+                color: C.inkSoft,
+                cursor: "pointer"
+              }}
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
+          {["NEET", "JEE", "Both"].map((ex) => (
+            <button
+              key={ex}
+              onClick={() => setExamFocus(ex)}
+              style={{
+                padding: "5px 12px",
+                borderRadius: 16,
+                border: `1px solid ${examFocus === ex ? C.sage : C.line}`,
+                background: examFocus === ex ? C.sageSoft : "transparent",
+                color: examFocus === ex ? C.sage : C.inkSoft,
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              {ex}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      <main style={{ flex: 1, padding: "16px 14px 20px" }}>
+        {tab === "tasks" ? (
+          <TasksTab tasks={tasks} subjects={visibleSubjects} user={user} viewMode={viewMode} setViewMode={setViewMode} friendUID={friendUID} />
+        ) : tab === "timer" ? (
+          <TimerTab focusLog={focusLog} user={user} friendUID={friendUID} />
+        ) : tab === "tests" ? (
+          <TestsTab coachingTests={coachingTests} visibleSubjects={visibleSubjects} user={user} />
+        ) : tab === "progress" ? (
+          <ProgressTab subjects={subjects} visibleSubjects={visibleSubjects} examFocus={examFocus} mocks={mocks} user={user} viewMode={viewMode} setViewMode={setViewMode} friendUID={friendUID} />
+        ) : tab === "notes" ? (
+          <NotesTab notes={notes} subjects={visibleSubjects} user={user} />
+        ) : (
+          <SettingsTab user={user} friendUID={friendUID} setFriendUID={setFriendUID} />
+        )}
+      </main>
+
+      <nav style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: C.paperRaised,
+        borderTop: `1px solid ${C.line}`,
+        display: "flex",
+        padding: "6px 4px calc(env(safe-area-inset-bottom, 0px) + 6px)",
+        zIndex: 100
+      }}>
+        {tabs.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 3,
+              padding: "6px 0",
+              background: "transparent",
+              border: "none",
+              color: tab === id ? C.sage : C.inkSoft,
+              fontFamily: BODY_FONT,
+              fontSize: 11,
+              cursor: "pointer",
+            }}
+          >
+            <Icon size={20} strokeWidth={tab === id ? 2.4 : 1.8} />
+            {label}
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
