@@ -14,8 +14,7 @@ import {
 import {
   CheckCircle2, Circle, Plus, X, Play, Pause, RotateCcw,
   ListTodo, Timer as TimerIcon, TrendingUp, NotebookPen,
-  Trash2, ChevronDown, ChevronRight, ClipboardList, Settings2,
-  Target
+  Trash2, ChevronDown, ChevronRight, ClipboardList, Settings2
 } from "lucide-react";
 
 // ---------- PALETTE ----------
@@ -31,8 +30,7 @@ const C = {
   claySoft: "#F5E4D8",
   green: "#5C8A63",
   greenSoft: "#E4EDE4",
-  accent: "#3D5A5A", // Darker sage for branding
-  gold: "#D4A843",   // Gold accent for K24
+  gold: "#D4A843",
 };
 
 const DISPLAY_FONT = "'Iowan Old Style', Georgia, 'Times New Roman', serif";
@@ -149,7 +147,7 @@ function EmptyState({ text }) {
   );
 }
 
-// ---------- K24 LOGO COMPONENT ----------
+// ---------- K24 LOGO ----------
 function K24Logo({ size = 40, withText = false }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -174,7 +172,6 @@ function K24Logo({ size = 40, withText = false }) {
         }}>
           K24
         </span>
-        {/* Small decorative dot */}
         <div style={{
           position: "absolute",
           bottom: size * 0.08,
@@ -201,7 +198,7 @@ function K24Logo({ size = 40, withText = false }) {
   );
 }
 
-// ---------- AUTH COMPONENT (with K24) ----------
+// ---------- AUTH ----------
 function Auth({ onAuth }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -240,39 +237,13 @@ function Auth({ onAuth }) {
         </div>
       </div>
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={inputStyle}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={inputStyle}
-        />
-        <button type="submit" style={solidBtn}>
-          {isLogin ? "Sign in" : "Create account"}
-        </button>
+        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} />
+        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required style={inputStyle} />
+        <button type="submit" style={solidBtn}>{isLogin ? "Sign in" : "Create account"}</button>
         {error && <div style={{ color: C.clay, fontSize: 13, textAlign: "center" }}>{error}</div>}
-        <button
-          type="button"
-          onClick={() => setIsLogin(!isLogin)}
-          style={{
-            background: "none",
-            border: "none",
-            color: C.sage,
-            textDecoration: "underline",
-            cursor: "pointer",
-            fontSize: 13,
-            padding: 8,
-          }}
-        >
+        <button type="button" onClick={() => setIsLogin(!isLogin)} style={{
+          background: "none", border: "none", color: C.sage, textDecoration: "underline", cursor: "pointer", fontSize: 13, padding: 8,
+        }}>
           {isLogin ? "Create account" : "Already have an account?"}
         </button>
       </form>
@@ -280,17 +251,13 @@ function Auth({ onAuth }) {
   );
 }
 
-// ---------- CUSTOM HOOK: REAL-TIME COLLECTION ----------
+// ---------- HOOKS ----------
 function useCollection(collectionName, userId) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) {
-      setData([]);
-      setLoading(false);
-      return;
-    }
+    if (!userId) { setData([]); setLoading(false); return; }
     const q = query(collection(db, collectionName), where("userId", "==", userId));
     const unsub = onSnapshot(q, (snap) => {
       setData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -302,21 +269,14 @@ function useCollection(collectionName, userId) {
   return { data, loading };
 }
 
-// ---------- CUSTOM HOOK: LIVE STATUS ----------
 function useLiveStatus(userId) {
   const [status, setStatus] = useState(null);
 
   useEffect(() => {
-    if (!userId) {
-      setStatus(null);
-      return;
-    }
+    if (!userId) { setStatus(null); return; }
     const unsub = onSnapshot(doc(db, "userStatus", userId), (doc) => {
-      if (doc.exists()) {
-        setStatus(doc.data());
-      } else {
-        setStatus({ mode: 'idle', isRunning: false });
-      }
+      if (doc.exists()) { setStatus(doc.data()); } 
+      else { setStatus({ mode: 'idle', isRunning: false }); }
     });
     return unsub;
   }, [userId]);
@@ -324,7 +284,7 @@ function useLiveStatus(userId) {
   return status;
 }
 
-// ---------- CRUD HELPERS ----------
+// ---------- CRUD ----------
 async function addItem(collectionName, item, userId) {
   await addDoc(collection(db, collectionName), { ...item, userId });
 }
@@ -336,35 +296,18 @@ async function deleteItem(collectionName, id) {
 }
 async function updateLiveStatus(userId, data) {
   await setDoc(doc(db, "userStatus", userId), {
-    ...data,
-    userId,
-    lastUpdated: new Date().toISOString()
+    ...data, userId, lastUpdated: new Date().toISOString()
   }, { merge: true });
 }
 
-// ---------- FRIEND LIVE STATUS COMPONENT ----------
+// ---------- FRIEND STATUS ----------
 function FriendLiveStatus({ friendUID }) {
   const status = useLiveStatus(friendUID);
 
   if (!status || status.mode === 'idle' || !status.isRunning) {
     return (
-      <div style={{
-        background: C.paperRaised,
-        border: `1px solid ${C.line}`,
-        borderRadius: 10,
-        padding: "12px 16px",
-        marginBottom: 16,
-        display: "flex",
-        alignItems: "center",
-        gap: 10
-      }}>
-        <span style={{
-          display: "inline-block",
-          width: 10,
-          height: 10,
-          borderRadius: "50%",
-          background: "#999"
-        }}></span>
+      <div style={{ background: C.paperRaised, border: `1px solid ${C.line}`, borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "#999" }}></span>
         <span style={{ fontSize: 14, color: C.inkSoft }}>Friend is idle</span>
       </div>
     );
@@ -380,101 +323,34 @@ function FriendLiveStatus({ friendUID }) {
   const progress = totalSeconds > 0 ? 1 - (status.secondsLeft / totalSeconds) : 0;
 
   return (
-    <div style={{
-      background: C.paperRaised,
-      border: `1px solid ${isFocus ? C.sage : C.clay}`,
-      borderLeft: `4px solid ${isFocus ? C.sage : C.clay}`,
-      borderRadius: 10,
-      padding: "12px 16px",
-      marginBottom: 16,
-      display: "flex",
-      alignItems: "center",
-      gap: 12
-    }}>
+    <div style={{ background: C.paperRaised, border: `1px solid ${isFocus ? C.sage : C.clay}`, borderLeft: `4px solid ${isFocus ? C.sage : C.clay}`, borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
       <div style={{ position: "relative" }}>
-        <span style={{
-          display: "inline-block",
-          width: 12,
-          height: 12,
-          borderRadius: "50%",
-          background: isRunning ? dotColor : "#999",
-          animation: isRunning ? 'pulse 1.5s ease-in-out infinite' : 'none'
-        }}></span>
+        <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", background: isRunning ? dotColor : "#999", animation: isRunning ? 'pulse 1.5s ease-in-out infinite' : 'none' }}></span>
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>
-          Friend is {statusText}
-          {isRunning && ` · ${mm}:${ss}`}
-        </div>
-        <div style={{ fontSize: 12, color: C.inkSoft }}>
-          {isRunning ? `${isFocus ? 'Focus' : 'Break'} session in progress` : 'Paused'}
-        </div>
+        <div style={{ fontSize: 14, fontWeight: 500 }}>Friend is {statusText}{isRunning && ` · ${mm}:${ss}`}</div>
+        <div style={{ fontSize: 12, color: C.inkSoft }}>{isRunning ? `${isFocus ? 'Focus' : 'Break'} session in progress` : 'Paused'}</div>
       </div>
       {isRunning && (
-        <div style={{
-          width: 44,
-          height: 44,
-          borderRadius: "50%",
-          background: `conic-gradient(${dotColor} ${progress * 360}deg, ${C.line} 0deg)`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0
-        }}>
-          <div style={{
-            width: 34,
-            height: 34,
-            borderRadius: "50%",
-            background: C.paper,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 10,
-            fontWeight: 600,
-            color: C.ink
-          }}>
-            {mm}
-          </div>
+        <div style={{ width: 44, height: 44, borderRadius: "50%", background: `conic-gradient(${dotColor} ${progress * 360}deg, ${C.line} 0deg)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", background: C.paper, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, color: C.ink }}>{mm}</div>
         </div>
       )}
     </div>
   );
 }
 
-// ---------- FRIEND STATUS BADGE (HEADER) ----------
 function FriendStatusBadge({ friendUID }) {
   const status = useLiveStatus(friendUID);
 
   let dotColor = "#999";
   let label = "Idle";
-  if (status?.mode === 'focus' && status.isRunning) {
-    dotColor = C.sage;
-    label = "Focusing";
-  } else if (status?.mode === 'break' && status.isRunning) {
-    dotColor = C.clay;
-    label = "Break";
-  }
+  if (status?.mode === 'focus' && status.isRunning) { dotColor = C.sage; label = "Focusing"; } 
+  else if (status?.mode === 'break' && status.isRunning) { dotColor = C.clay; label = "Break"; }
 
   return (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      fontSize: 11,
-      color: C.inkSoft,
-      background: C.paperRaised,
-      padding: "4px 10px",
-      borderRadius: 20,
-      border: `1px solid ${C.line}`
-    }}>
-      <span style={{
-        display: "inline-block",
-        width: 8,
-        height: 8,
-        borderRadius: "50%",
-        background: dotColor,
-        animation: status?.isRunning ? 'pulse 1.5s ease-in-out infinite' : 'none'
-      }}></span>
+    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.inkSoft, background: C.paperRaised, padding: "4px 10px", borderRadius: 20, border: `1px solid ${C.line}` }}>
+      <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: dotColor, animation: status?.isRunning ? 'pulse 1.5s ease-in-out infinite' : 'none' }}></span>
       <span>Friend: {label}</span>
     </div>
   );
@@ -494,21 +370,14 @@ export default function App() {
       if (u) {
         setUser(u);
         const docSnap = await getDoc(doc(db, "users", u.uid));
-        if (docSnap.exists()) {
-          setFriendUID(docSnap.data().friendUID || null);
-        } else {
-          await setDoc(doc(db, "users", u.uid), { friendUID: null });
-        }
-      } else {
-        setUser(null);
-        setFriendUID(null);
-      }
+        if (docSnap.exists()) { setFriendUID(docSnap.data().friendUID || null); } 
+        else { await setDoc(doc(db, "users", u.uid), { friendUID: null }); }
+      } else { setUser(null); setFriendUID(null); }
       setLoadingAuth(false);
     });
     return unsub;
   }, []);
 
-  // Data subscriptions
   const myTasks = useCollection("tasks", user?.uid);
   const myFocusLog = useCollection("focusLog", user?.uid);
   const mySubjects = useCollection("subjects", user?.uid);
@@ -530,9 +399,7 @@ export default function App() {
   const mocks = viewMode === "friend" ? friendMocks.data : myMocks.data;
   const coachingTests = viewMode === "friend" ? friendCoachingTests.data : myCoachingTests.data;
 
-  const visibleSubjects = subjects.filter(
-    (s) => examFocus === "Both" || !s.exam || s.exam === "Both" || s.exam === examFocus
-  );
+  const visibleSubjects = subjects.filter(s => examFocus === "Both" || !s.exam || s.exam === "Both" || s.exam === examFocus);
 
   if (loadingAuth) return <div style={{ padding: 40, textAlign: "center" }}>Loading…</div>;
   if (!user) return <Auth onAuth={() => {}} />;
@@ -547,238 +414,58 @@ export default function App() {
   ];
 
   return (
-    <div style={{
-      fontFamily: BODY_FONT,
-      background: C.paper,
-      minHeight: "100vh",
-      color: C.ink,
-      position: "relative",
-      paddingBottom: 80
-    }}>
-      {/* K24 Watermark - Bottom Right */}
-      <div style={{
-        position: "fixed",
-        bottom: 70,
-        right: 16,
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        userSelect: "none",
-        pointerEvents: "none",
-        opacity: 0.25,
-        zIndex: 999,
-      }}>
-        <div style={{
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          background: `linear-gradient(135deg, ${C.sage}, ${C.gold})`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
-          <span style={{
-            fontFamily: DISPLAY_FONT,
-            fontSize: 10,
-            fontWeight: "bold",
-            color: "#FFFFFF",
-            letterSpacing: -0.5,
-          }}>
-            K24
-          </span>
+    <div style={{ fontFamily: BODY_FONT, background: C.paper, minHeight: "100vh", color: C.ink, position: "relative", paddingBottom: 80 }}>
+      {/* K24 Watermark */}
+      <div style={{ position: "fixed", bottom: 70, right: 16, display: "flex", alignItems: "center", gap: 6, userSelect: "none", pointerEvents: "none", opacity: 0.25, zIndex: 999 }}>
+        <div style={{ width: 28, height: 28, borderRadius: "50%", background: `linear-gradient(135deg, ${C.sage}, ${C.gold})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ fontFamily: DISPLAY_FONT, fontSize: 10, fontWeight: "bold", color: "#FFFFFF", letterSpacing: -0.5 }}>K24</span>
         </div>
-        <span style={{
-          fontFamily: DISPLAY_FONT,
-          fontSize: 10,
-          color: C.inkSoft,
-          letterSpacing: 0.5,
-        }}>
-          Focus Prep
-        </span>
+        <span style={{ fontFamily: DISPLAY_FONT, fontSize: 10, color: C.inkSoft, letterSpacing: 0.5 }}>Focus Prep</span>
       </div>
 
-      {/* K24 Logo - Top Left (Small) */}
-      <div style={{
-        position: "fixed",
-        top: 12,
-        left: 12,
-        zIndex: 100,
-        opacity: 0.6,
-      }}>
-        <div style={{
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
-          background: `linear-gradient(135deg, ${C.sage}, ${C.gold})`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: "0 2px 8px rgba(91, 123, 122, 0.2)",
-        }}>
-          <span style={{
-            fontFamily: DISPLAY_FONT,
-            fontSize: 12,
-            fontWeight: "bold",
-            color: "#FFFFFF",
-            letterSpacing: -0.5,
-          }}>
-            K24
-          </span>
+      {/* K24 Logo - Top Left */}
+      <div style={{ position: "fixed", top: 12, left: 12, zIndex: 100, opacity: 0.6 }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg, ${C.sage}, ${C.gold})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(91, 123, 122, 0.2)" }}>
+          <span style={{ fontFamily: DISPLAY_FONT, fontSize: 12, fontWeight: "bold", color: "#FFFFFF", letterSpacing: -0.5 }}>K24</span>
         </div>
       </div>
 
-      {/* Header */}
       <header style={{ padding: "20px 18px 14px", borderBottom: `1px solid ${C.line}`, paddingLeft: 56 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <div style={{ fontFamily: DISPLAY_FONT, fontSize: 22, letterSpacing: 0.2, display: "flex", alignItems: "center", gap: 8 }}>
               <span>Focus Prep</span>
-              <span style={{
-                fontSize: 11,
-                color: C.sage,
-                background: C.sageSoft,
-                padding: "2px 8px",
-                borderRadius: 12,
-                fontWeight: "normal",
-              }}>
-                K24
-              </span>
+              <span style={{ fontSize: 11, color: C.sage, background: C.sageSoft, padding: "2px 8px", borderRadius: 12, fontWeight: "normal" }}>K24</span>
             </div>
             <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2 }}>
               {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
-              {friendUID && viewMode === "friend" && (
-                <span style={{
-                  marginLeft: 8,
-                  background: C.sageSoft,
-                  padding: "2px 8px",
-                  borderRadius: 12,
-                  fontSize: 11,
-                  color: C.sage
-                }}>
-                  Friend view
-                </span>
-              )}
+              {friendUID && viewMode === "friend" && <span style={{ marginLeft: 8, background: C.sageSoft, padding: "2px 8px", borderRadius: 12, fontSize: 11, color: C.sage }}>Friend view</span>}
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {friendUID && <FriendStatusBadge friendUID={friendUID} />}
-            <button
-              onClick={() => signOut(auth)}
-              style={{
-                background: "none",
-                border: `1px solid ${C.line}`,
-                borderRadius: 20,
-                padding: "4px 12px",
-                fontSize: 12,
-                color: C.inkSoft,
-                cursor: "pointer"
-              }}
-            >
-              Sign out
-            </button>
+            <button onClick={() => signOut(auth)} style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: 20, padding: "4px 12px", fontSize: 12, color: C.inkSoft, cursor: "pointer" }}>Sign out</button>
           </div>
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
           {["NEET", "JEE", "Both"].map((ex) => (
-            <button
-              key={ex}
-              onClick={() => setExamFocus(ex)}
-              style={{
-                padding: "5px 12px",
-                borderRadius: 16,
-                border: `1px solid ${examFocus === ex ? C.sage : C.line}`,
-                background: examFocus === ex ? C.sageSoft : "transparent",
-                color: examFocus === ex ? C.sage : C.inkSoft,
-                fontSize: 12,
-                cursor: "pointer",
-              }}
-            >
-              {ex}
-            </button>
+            <button key={ex} onClick={() => setExamFocus(ex)} style={{ padding: "5px 12px", borderRadius: 16, border: `1px solid ${examFocus === ex ? C.sage : C.line}`, background: examFocus === ex ? C.sageSoft : "transparent", color: examFocus === ex ? C.sage : C.inkSoft, fontSize: 12, cursor: "pointer" }}>{ex}</button>
           ))}
         </div>
       </header>
 
-      {/* Main Content */}
       <main style={{ flex: 1, padding: "16px 14px 20px" }}>
-        {tab === "tasks" ? (
-          <TasksTab
-            tasks={tasks}
-            subjects={visibleSubjects}
-            user={user}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            friendUID={friendUID}
-          />
-        ) : tab === "timer" ? (
-          <TimerTab
-            focusLog={focusLog}
-            user={user}
-            friendUID={friendUID}
-          />
-        ) : tab === "tests" ? (
-          <TestsTab
-            coachingTests={coachingTests}
-            visibleSubjects={visibleSubjects}
-            user={user}
-          />
-        ) : tab === "progress" ? (
-          <ProgressTab
-            subjects={subjects}
-            visibleSubjects={visibleSubjects}
-            examFocus={examFocus}
-            mocks={mocks}
-            user={user}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            friendUID={friendUID}
-          />
-        ) : tab === "notes" ? (
-          <NotesTab
-            notes={notes}
-            subjects={visibleSubjects}
-            user={user}
-          />
-        ) : (
-          <SettingsTab
-            user={user}
-            friendUID={friendUID}
-            setFriendUID={setFriendUID}
-          />
-        )}
+        {tab === "tasks" ? <TasksTab tasks={tasks} subjects={visibleSubjects} user={user} viewMode={viewMode} setViewMode={setViewMode} friendUID={friendUID} />
+          : tab === "timer" ? <TimerTab focusLog={focusLog} user={user} friendUID={friendUID} />
+          : tab === "tests" ? <TestsTab coachingTests={coachingTests} visibleSubjects={visibleSubjects} user={user} />
+          : tab === "progress" ? <ProgressTab subjects={subjects} visibleSubjects={visibleSubjects} examFocus={examFocus} mocks={mocks} user={user} viewMode={viewMode} setViewMode={setViewMode} friendUID={friendUID} />
+          : tab === "notes" ? <NotesTab notes={notes} subjects={visibleSubjects} user={user} />
+          : <SettingsTab user={user} friendUID={friendUID} setFriendUID={setFriendUID} />}
       </main>
 
-      {/* Bottom Navigation */}
-      <nav style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: C.paperRaised,
-        borderTop: `1px solid ${C.line}`,
-        display: "flex",
-        padding: "6px 4px calc(env(safe-area-inset-bottom, 0px) + 6px)",
-        zIndex: 100
-      }}>
+      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: C.paperRaised, borderTop: `1px solid ${C.line}`, display: "flex", padding: "6px 4px calc(env(safe-area-inset-bottom, 0px) + 6px)", zIndex: 100 }}>
         {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 3,
-              padding: "6px 0",
-              background: "transparent",
-              border: "none",
-              color: tab === id ? C.sage : C.inkSoft,
-              fontFamily: BODY_FONT,
-              fontSize: 11,
-              cursor: "pointer",
-            }}
-          >
+          <button key={id} onClick={() => setTab(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "6px 0", background: "transparent", border: "none", color: tab === id ? C.sage : C.inkSoft, fontFamily: BODY_FONT, fontSize: 11, cursor: "pointer" }}>
             <Icon size={20} strokeWidth={tab === id ? 2.4 : 1.8} />
             {label}
           </button>
@@ -795,9 +482,7 @@ function TasksTab({ tasks, subjects, user, viewMode, setViewMode, friendUID }) {
   const [subject, setSubject] = useState(subjects[0]?.name || "");
   const [due, setDue] = useState(todayISO());
 
-  useEffect(() => {
-    if (!subject && subjects[0]) setSubject(subjects[0].name);
-  }, [subjects]);
+  useEffect(() => { if (!subject && subjects[0]) setSubject(subjects[0].name); }, [subjects]);
 
   const addTask = async () => {
     if (!title.trim()) return;
@@ -805,15 +490,8 @@ function TasksTab({ tasks, subjects, user, viewMode, setViewMode, friendUID }) {
     setTitle("");
     setShowForm(false);
   };
-
-  const toggle = async (id) => {
-    const task = tasks.find(t => t.id === id);
-    await updateItem("tasks", id, { done: !task.done });
-  };
-
-  const remove = async (id) => {
-    await deleteItem("tasks", id);
-  };
+  const toggle = async (id) => { const task = tasks.find(t => t.id === id); await updateItem("tasks", id, { done: !task.done }); };
+  const remove = async (id) => { await deleteItem("tasks", id); };
 
   const sorted = [...tasks].sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1;
@@ -824,31 +502,18 @@ function TasksTab({ tasks, subjects, user, viewMode, setViewMode, friendUID }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-        <div style={{ fontSize: 13, color: C.inkSoft }}>
-          {openCount === 0 ? "Nothing outstanding" : `${openCount} open`}
-        </div>
+        <div style={{ fontSize: 13, color: C.inkSoft }}>{openCount === 0 ? "Nothing outstanding" : `${openCount} open`}</div>
         <div style={{ display: "flex", gap: 6 }}>
-          {friendUID && (
-            <div style={{ display: "flex", gap: 4 }}>
-              <button onClick={() => setViewMode("mine")} style={pillBtn(viewMode === "mine")}>My</button>
-              <button onClick={() => setViewMode("friend")} style={pillBtn(viewMode === "friend")}>Friend</button>
-            </div>
-          )}
-          <button onClick={() => setShowForm(s => !s)} style={solidPillBtn}>
-            <Plus size={15} /> Add
-          </button>
+          {friendUID && <div style={{ display: "flex", gap: 4 }}>
+            <button onClick={() => setViewMode("mine")} style={pillBtn(viewMode === "mine")}>My</button>
+            <button onClick={() => setViewMode("friend")} style={pillBtn(viewMode === "friend")}>Friend</button>
+          </div>}
+          <button onClick={() => setShowForm(s => !s)} style={solidPillBtn}><Plus size={15} /> Add</button>
         </div>
       </div>
-
       {showForm && (
         <div style={formCard}>
-          <input
-            autoFocus
-            placeholder="Chapter, PYQs, revision…"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={inputStyle}
-          />
+          <input autoFocus placeholder="Chapter, PYQs, revision…" value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
           <div style={{ display: "flex", gap: 8 }}>
             <select value={subject} onChange={(e) => setSubject(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
               {subjects.length === 0 && <option value="">General</option>}
@@ -862,45 +527,19 @@ function TasksTab({ tasks, subjects, user, viewMode, setViewMode, friendUID }) {
           </div>
         </div>
       )}
-
-      {sorted.length === 0 && !showForm ? (
-        <EmptyState text="Add a chapter to revise, a PYQ set, or a mock test." />
-      ) : (
+      {sorted.length === 0 && !showForm ? <EmptyState text="Add a chapter to revise, a PYQ set, or a mock test." /> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {sorted.map(t => {
             const overdue = !t.done && daysUntil(t.due) < 0;
             return (
-              <div key={t.id} style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                background: C.paperRaised,
-                border: `1px solid ${C.line}`,
-                borderLeft: `3px solid ${colorForSubject(t.subject, subjects)}`,
-                borderRadius: 8,
-                padding: "10px 12px",
-                opacity: t.done ? 0.55 : 1,
-              }}>
-                <button
-                  onClick={() => toggle(t.id)}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: t.done ? C.green : C.inkSoft }}
-                >
-                  {t.done ? <CheckCircle2 size={20} /> : <Circle size={20} />}
-                </button>
+              <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, background: C.paperRaised, border: `1px solid ${C.line}`, borderLeft: `3px solid ${colorForSubject(t.subject, subjects)}`, borderRadius: 8, padding: "10px 12px", opacity: t.done ? 0.55 : 1 }}>
+                <button onClick={() => toggle(t.id)} style={{ background: "none", border: "none", cursor: "pointer", color: t.done ? C.green : C.inkSoft }}>{t.done ? <CheckCircle2 size={20} /> : <Circle size={20} />}</button>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, textDecoration: t.done ? "line-through" : "none" }}>{t.title}</div>
-                  <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>
-                    {t.subject || "General"}{t.due ? ` · ${dueLabel(t.due)}` : ""}
-                  </div>
+                  <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{t.subject || "General"}{t.due ? ` · ${dueLabel(t.due)}` : ""}</div>
                 </div>
-                {overdue && (
-                  <span style={{ fontSize: 11, background: C.claySoft, color: C.clay, padding: "2px 7px", borderRadius: 6 }}>
-                    late
-                  </span>
-                )}
-                <button onClick={() => remove(t.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.inkSoft }}>
-                  <Trash2 size={16} />
-                </button>
+                {overdue && <span style={{ fontSize: 11, background: C.claySoft, color: C.clay, padding: "2px 7px", borderRadius: 6 }}>late</span>}
+                <button onClick={() => remove(t.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.inkSoft }}><Trash2 size={16} /></button>
               </div>
             );
           })}
@@ -924,47 +563,24 @@ function TimerTab({ focusLog, user, friendUID }) {
   const FOCUS = timerSettings.focusMinutes * 60;
   const BREAK = timerSettings.breakMinutes * 60;
 
-  // Update live status every second
   useEffect(() => {
     const updateStatus = async () => {
-      await updateLiveStatus(user.uid, {
-        mode: mode,
-        isRunning: running,
-        secondsLeft: secondsLeft,
-        focusMinutes: timerSettings.focusMinutes,
-        breakMinutes: timerSettings.breakMinutes,
-        startTime: running ? new Date().toISOString() : null
-      });
+      await updateLiveStatus(user.uid, { mode, isRunning: running, secondsLeft, focusMinutes: timerSettings.focusMinutes, breakMinutes: timerSettings.breakMinutes, startTime: running ? new Date().toISOString() : null });
     };
     updateStatus();
   }, [mode, running, secondsLeft, timerSettings, user.uid]);
 
-  // Clear status on unmount
-  useEffect(() => {
-    return () => {
-      updateLiveStatus(user.uid, { mode: 'idle', isRunning: false, secondsLeft: 0 });
-    };
-  }, [user.uid]);
+  useEffect(() => { return () => { updateLiveStatus(user.uid, { mode: 'idle', isRunning: false, secondsLeft: 0 }); }; }, [user.uid]);
 
-  // Timer logic
   useEffect(() => {
-    if (!running) {
-      clearInterval(intervalRef.current);
-      return;
-    }
+    if (!running) { clearInterval(intervalRef.current); return; }
     intervalRef.current = setInterval(() => {
       setSecondsLeft(s => {
         if (s <= 1) {
           clearInterval(intervalRef.current);
           setRunning(false);
-          if (mode === "focus") {
-            addItem("focusLog", { date: todayISO(), minutes: FOCUS / 60 }, user.uid);
-            setMode("break");
-            return BREAK;
-          } else {
-            setMode("focus");
-            return FOCUS;
-          }
+          if (mode === "focus") { addItem("focusLog", { date: todayISO(), minutes: FOCUS / 60 }, user.uid); setMode("break"); return BREAK; } 
+          else { setMode("focus"); return FOCUS; }
         }
         return s - 1;
       });
@@ -972,26 +588,13 @@ function TimerTab({ focusLog, user, friendUID }) {
     return () => clearInterval(intervalRef.current);
   }, [running, mode, FOCUS, BREAK, user.uid]);
 
-  const reset = useCallback(() => {
-    setRunning(false);
-    clearInterval(intervalRef.current);
-    setSecondsLeft(mode === "focus" ? FOCUS : BREAK);
-  }, [mode, FOCUS, BREAK]);
-
-  const switchMode = (m) => {
-    setRunning(false);
-    clearInterval(intervalRef.current);
-    setMode(m);
-    setSecondsLeft(m === "focus" ? FOCUS : BREAK);
-  };
-
+  const reset = useCallback(() => { setRunning(false); clearInterval(intervalRef.current); setSecondsLeft(mode === "focus" ? FOCUS : BREAK); }, [mode, FOCUS, BREAK]);
+  const switchMode = (m) => { setRunning(false); clearInterval(intervalRef.current); setMode(m); setSecondsLeft(m === "focus" ? FOCUS : BREAK); };
   const saveEdit = () => {
     const f = Math.min(180, Math.max(1, parseInt(focusInput, 10) || timerSettings.focusMinutes));
     const b = Math.min(60, Math.max(1, parseInt(breakInput, 10) || timerSettings.breakMinutes));
     setTimerSettings({ focusMinutes: f, breakMinutes: b });
-    if (!running) {
-      setSecondsLeft(mode === "focus" ? f * 60 : b * 60);
-    }
+    if (!running) { setSecondsLeft(mode === "focus" ? f * 60 : b * 60); }
     setShowEdit(false);
   };
 
@@ -1003,74 +606,21 @@ function TimerTab({ focusLog, user, friendUID }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      {/* Friend Live Status */}
       {friendUID && <FriendLiveStatus friendUID={friendUID} />}
-
-      {/* Timer Controls */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 22 }}>
         {["focus", "break"].map(m => (
-          <button
-            key={m}
-            onClick={() => switchMode(m)}
-            style={{
-              padding: "6px 14px",
-              borderRadius: 20,
-              border: `1px solid ${mode === m ? ringColor : C.line}`,
-              background: mode === m ? (m === "focus" ? C.sageSoft : C.claySoft) : "transparent",
-              color: mode === m ? ringColor : C.inkSoft,
-              fontSize: 13,
-              cursor: "pointer",
-            }}
-          >
+          <button key={m} onClick={() => switchMode(m)} style={{ padding: "6px 14px", borderRadius: 20, border: `1px solid ${mode === m ? ringColor : C.line}`, background: mode === m ? (m === "focus" ? C.sageSoft : C.claySoft) : "transparent", color: mode === m ? ringColor : C.inkSoft, fontSize: 13, cursor: "pointer" }}>
             {m === "focus" ? `Focus ${timerSettings.focusMinutes}m` : `Break ${timerSettings.breakMinutes}m`}
           </button>
         ))}
-        <button
-          onClick={() => setShowEdit(!showEdit)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 30,
-            height: 30,
-            borderRadius: "50%",
-            border: `1px solid ${showEdit ? C.sage : C.line}`,
-            background: showEdit ? C.sageSoft : "transparent",
-            color: showEdit ? C.sage : C.inkSoft,
-            cursor: "pointer"
-          }}
-        >
-          <Settings2 size={15} />
-        </button>
+        <button onClick={() => setShowEdit(!showEdit)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: "50%", border: `1px solid ${showEdit ? C.sage : C.line}`, background: showEdit ? C.sageSoft : "transparent", color: showEdit ? C.sage : C.inkSoft, cursor: "pointer" }}><Settings2 size={15} /></button>
       </div>
-
-      {/* Edit Settings */}
       {showEdit && (
         <div style={{ ...formCard, width: "100%", maxWidth: 320, marginBottom: 22 }}>
           <div style={{ fontSize: 12, color: C.inkSoft }}>Set focus & break minutes</div>
           <div style={{ display: "flex", gap: 8 }}>
-            <label style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: C.inkSoft, marginBottom: 4 }}>Focus</div>
-              <input
-                type="number"
-                min={1}
-                max={180}
-                value={focusInput}
-                onChange={(e) => setFocusInput(e.target.value)}
-                style={inputStyle}
-              />
-            </label>
-            <label style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: C.inkSoft, marginBottom: 4 }}>Break</div>
-              <input
-                type="number"
-                min={1}
-                max={60}
-                value={breakInput}
-                onChange={(e) => setBreakInput(e.target.value)}
-                style={inputStyle}
-              />
-            </label>
+            <label style={{ flex: 1 }}><div style={{ fontSize: 11, color: C.inkSoft, marginBottom: 4 }}>Focus</div><input type="number" min={1} max={180} value={focusInput} onChange={(e) => setFocusInput(e.target.value)} style={inputStyle} /></label>
+            <label style={{ flex: 1 }}><div style={{ fontSize: 11, color: C.inkSoft, marginBottom: 4 }}>Break</div><input type="number" min={1} max={60} value={breakInput} onChange={(e) => setBreakInput(e.target.value)} style={inputStyle} /></label>
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
             <button onClick={() => setShowEdit(false)} style={ghostBtn}>Cancel</button>
@@ -1078,77 +628,22 @@ function TimerTab({ focusLog, user, friendUID }) {
           </div>
         </div>
       )}
-
-      {/* Timer Display */}
-      <div style={{
-        width: 220,
-        height: 220,
-        borderRadius: "50%",
-        background: `conic-gradient(${ringColor} ${pct * 360}deg, ${C.line} 0deg)`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: 22,
-      }}>
-        <div style={{
-          width: 188,
-          height: 188,
-          borderRadius: "50%",
-          background: C.paper,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
+      <div style={{ width: 220, height: 220, borderRadius: "50%", background: `conic-gradient(${ringColor} ${pct * 360}deg, ${C.line} 0deg)`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 22 }}>
+        <div style={{ width: 188, height: 188, borderRadius: "50%", background: C.paper, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
           <div style={{ fontFamily: DISPLAY_FONT, fontSize: 42 }}>{mm}:{ss}</div>
-          <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>
-            {mode === "focus" ? "stay with it" : "step away"}
-          </div>
+          <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{mode === "focus" ? "stay with it" : "step away"}</div>
         </div>
       </div>
-
-      {/* Timer Buttons */}
       <div style={{ display: "flex", gap: 12, marginBottom: 26 }}>
-        <button
-          onClick={() => setRunning(r => !r)}
-          style={{
-            ...solidBtn,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "10px 22px",
-            fontSize: 14
-          }}
-        >
-          {running ? <Pause size={16} /> : <Play size={16} />}
-          {running ? "Pause" : "Start"}
-        </button>
-        <button
-          onClick={reset}
-          style={{
-            ...ghostBtn,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "10px 16px"
-          }}
-        >
-          <RotateCcw size={16} /> Reset
-        </button>
+        <button onClick={() => setRunning(r => !r)} style={{ ...solidBtn, display: "flex", alignItems: "center", gap: 6, padding: "10px 22px", fontSize: 14 }}>{running ? <Pause size={16} /> : <Play size={16} />}{running ? "Pause" : "Start"}</button>
+        <button onClick={reset} style={{ ...ghostBtn, display: "flex", alignItems: "center", gap: 6, padding: "10px 16px" }}><RotateCcw size={16} /> Reset</button>
       </div>
-
-      {/* Session Count */}
-      <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 22 }}>
-        {focusLog.length} focus {focusLog.length === 1 ? "session" : "sessions"} completed
-      </div>
-
-      {/* Focus Summary */}
+      <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 22 }}>{focusLog.length} focus {focusLog.length === 1 ? "session" : "sessions"} completed</div>
       <FocusHoursSummary focusLog={focusLog} range={range} setRange={setRange} />
     </div>
   );
 }
 
-// ---------- FOCUS HOURS SUMMARY ----------
 function FocusHoursSummary({ focusLog, range, setRange }) {
   const days = last7Days();
   const minutesByDay = days.map(d => focusLog.filter(f => f.date === d).reduce((sum, f) => sum + f.minutes, 0));
@@ -1160,44 +655,16 @@ function FocusHoursSummary({ focusLog, range, setRange }) {
     <div style={{ width: "100%" }}>
       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         {["day", "week"].map(r => (
-          <button
-            key={r}
-            onClick={() => setRange(r)}
-            style={{
-              padding: "5px 12px",
-              borderRadius: 16,
-              border: `1px solid ${range === r ? C.sage : C.line}`,
-              background: range === r ? C.sageSoft : "transparent",
-              color: range === r ? C.sage : C.inkSoft,
-              fontSize: 12,
-              cursor: "pointer",
-            }}
-          >
-            {r === "day" ? "Today" : "This week"}
-          </button>
+          <button key={r} onClick={() => setRange(r)} style={{ padding: "5px 12px", borderRadius: 16, border: `1px solid ${range === r ? C.sage : C.line}`, background: range === r ? C.sageSoft : "transparent", color: range === r ? C.sage : C.inkSoft, fontSize: 12, cursor: "pointer" }}>{r === "day" ? "Today" : "This week"}</button>
         ))}
       </div>
-
       {range === "day" ? (
-        <div style={{
-          background: C.paperRaised,
-          border: `1px solid ${C.line}`,
-          borderRadius: 10,
-          padding: "16px 14px",
-          textAlign: "center"
-        }}>
-          <div style={{ fontFamily: DISPLAY_FONT, fontSize: 32, color: C.ink }}>
-            {hoursLabel(todayMinutes)}
-          </div>
+        <div style={{ background: C.paperRaised, border: `1px solid ${C.line}`, borderRadius: 10, padding: "16px 14px", textAlign: "center" }}>
+          <div style={{ fontFamily: DISPLAY_FONT, fontSize: 32, color: C.ink }}>{hoursLabel(todayMinutes)}</div>
           <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>focused today</div>
         </div>
       ) : (
-        <div style={{
-          background: C.paperRaised,
-          border: `1px solid ${C.line}`,
-          borderRadius: 10,
-          padding: "14px 12px 10px"
-        }}>
+        <div style={{ background: C.paperRaised, border: `1px solid ${C.line}`, borderRadius: 10, padding: "14px 12px 10px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
             <span style={{ fontSize: 12, color: C.inkSoft }}>Last 7 days</span>
             <span style={{ fontSize: 13, color: C.ink }}>{hoursLabel(weekMinutes)} total</span>
@@ -1209,19 +676,8 @@ function FocusHoursSummary({ focusLog, range, setRange }) {
               const isToday = d === todayISO();
               return (
                 <div key={d} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <div
-                    title={`${d} · ${hoursLabel(m)}`}
-                    style={{
-                      width: "100%",
-                      height: `${barPct}%`,
-                      background: isToday ? C.sage : C.sageSoft,
-                      borderRadius: "3px 3px 0 0",
-                      minHeight: 4,
-                    }}
-                  />
-                  <span style={{ fontSize: 10, color: isToday ? C.sage : C.inkSoft }}>
-                    {dayShortLabel(d)}
-                  </span>
+                  <div title={`${d} · ${hoursLabel(m)}`} style={{ width: "100%", height: `${barPct}%`, background: isToday ? C.sage : C.sageSoft, borderRadius: "3px 3px 0 0", minHeight: 4 }} />
+                  <span style={{ fontSize: 10, color: isToday ? C.sage : C.inkSoft }}>{dayShortLabel(d)}</span>
                 </div>
               );
             })}
@@ -1241,9 +697,7 @@ function TestsTab({ coachingTests, visibleSubjects, user }) {
   const [openTestId, setOpenTestId] = useState(null);
   const [chapterInput, setChapterInput] = useState("");
 
-  useEffect(() => {
-    if (!subject && visibleSubjects[0]) setSubject(visibleSubjects[0].name);
-  }, [visibleSubjects]);
+  useEffect(() => { if (!subject && visibleSubjects[0]) setSubject(visibleSubjects[0].name); }, [visibleSubjects]);
 
   const addTest = async () => {
     if (!name.trim()) return;
@@ -1251,11 +705,7 @@ function TestsTab({ coachingTests, visibleSubjects, user }) {
     setName("");
     setShowForm(false);
   };
-
-  const removeTest = async (id) => {
-    await deleteItem("coachingTests", id);
-  };
-
+  const removeTest = async (id) => { await deleteItem("coachingTests", id); };
   const addChapter = async (testId) => {
     if (!chapterInput.trim()) return;
     const test = coachingTests.find(t => t.id === testId);
@@ -1263,13 +713,11 @@ function TestsTab({ coachingTests, visibleSubjects, user }) {
     await updateItem("coachingTests", testId, { chapters: newChapters });
     setChapterInput("");
   };
-
   const toggleChapter = async (testId, chapterId) => {
     const test = coachingTests.find(t => t.id === testId);
     const newChapters = test.chapters.map(c => c.id === chapterId ? { ...c, done: !c.done } : c);
     await updateItem("coachingTests", testId, { chapters: newChapters });
   };
-
   const removeChapter = async (testId, chapterId) => {
     const test = coachingTests.find(t => t.id === testId);
     const newChapters = test.chapters.filter(c => c.id !== chapterId);
@@ -1288,80 +736,29 @@ function TestsTab({ coachingTests, visibleSubjects, user }) {
     const open = openTestId === t.id;
     const nDays = daysUntil(t.date);
     return (
-      <div key={t.id} style={{
-        background: C.paperRaised,
-        border: `1px solid ${C.line}`,
-        borderLeft: `3px solid ${fullyReady ? C.green : colorForSubject(t.subject, visibleSubjects)}`,
-        borderRadius: 8,
-      }}>
-        <button
-          onClick={() => setOpenTestId(open ? null : t.id)}
-          style={{
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "10px 12px",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            textAlign: "left"
-          }}
-        >
+      <div key={t.id} style={{ background: C.paperRaised, border: `1px solid ${C.line}`, borderLeft: `3px solid ${fullyReady ? C.green : colorForSubject(t.subject, visibleSubjects)}`, borderRadius: 8 }}>
+        <button onClick={() => setOpenTestId(open ? null : t.id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
           {open ? <ChevronDown size={16} color={C.inkSoft} /> : <ChevronRight size={16} color={C.inkSoft} />}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, color: C.ink }}>{t.name}</div>
-            <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>
-              {t.subject || "General"} · {nDays < 0 ? `${Math.abs(nDays)}d ago` : nDays === 0 ? "today" : `in ${nDays}d`}
-              {chapters.length ? ` · ${doneCount}/${chapters.length} chapters` : ""}
-            </div>
+            <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{t.subject || "General"} · {nDays < 0 ? `${Math.abs(nDays)}d ago` : nDays === 0 ? "today" : `in ${nDays}d`}{chapters.length ? ` · ${doneCount}/${chapters.length} chapters` : ""}</div>
           </div>
-          {fullyReady ? (
-            <span style={{ fontSize: 11, background: C.greenSoft, color: C.green, padding: "3px 8px", borderRadius: 6 }}>
-              ready
-            </span>
-          ) : chapters.length > 0 ? (
-            <div style={{ width: 60, height: 6, background: C.line, borderRadius: 4, overflow: "hidden" }}>
-              <div style={{ width: `${pct}%`, height: "100%", background: colorForSubject(t.subject, visibleSubjects) }} />
-            </div>
-          ) : null}
-          <span
-            onClick={(e) => { e.stopPropagation(); removeTest(t.id); }}
-            style={{ color: C.inkSoft, cursor: "pointer", display: "flex" }}
-          >
-            <Trash2 size={15} />
-          </span>
+          {fullyReady ? <span style={{ fontSize: 11, background: C.greenSoft, color: C.green, padding: "3px 8px", borderRadius: 6 }}>ready</span> : chapters.length > 0 ? <div style={{ width: 60, height: 6, background: C.line, borderRadius: 4, overflow: "hidden" }}><div style={{ width: `${pct}%`, height: "100%", background: colorForSubject(t.subject, visibleSubjects) }} /></div> : null}
+          <span onClick={(e) => { e.stopPropagation(); removeTest(t.id); }} style={{ color: C.inkSoft, cursor: "pointer", display: "flex" }}><Trash2 size={15} /></span>
         </button>
         {open && (
           <div style={{ padding: "0 12px 12px" }}>
-            {chapters.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
-                {chapters.map(c => (
-                  <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <button
-                      onClick={() => toggleChapter(t.id, c.id)}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: c.done ? C.green : C.inkSoft }}
-                    >
-                      {c.done ? <CheckCircle2 size={17} /> : <Circle size={17} />}
-                    </button>
-                    <span style={{ flex: 1, fontSize: 13, textDecoration: c.done ? "line-through" : "none", opacity: c.done ? 0.6 : 1 }}>
-                      {c.name}
-                    </span>
-                    <button onClick={() => removeChapter(t.id, c.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.inkSoft }}>
-                      <X size={13} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            {chapters.length > 0 && <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
+              {chapters.map(c => (
+                <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <button onClick={() => toggleChapter(t.id, c.id)} style={{ background: "none", border: "none", cursor: "pointer", color: c.done ? C.green : C.inkSoft }}>{c.done ? <CheckCircle2 size={17} /> : <Circle size={17} />}</button>
+                  <span style={{ flex: 1, fontSize: 13, textDecoration: c.done ? "line-through" : "none", opacity: c.done ? 0.6 : 1 }}>{c.name}</span>
+                  <button onClick={() => removeChapter(t.id, c.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.inkSoft }}><X size={13} /></button>
+                </div>
+              ))}
+            </div>}
             <div style={{ display: "flex", gap: 6 }}>
-              <input
-                placeholder="Add a chapter"
-                value={chapterInput}
-                onChange={(e) => setChapterInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") addChapter(t.id); }}
-                style={{ ...inputStyle, flex: 1, padding: "7px 9px", fontSize: 13 }}
-              />
+              <input placeholder="Add a chapter" value={chapterInput} onChange={(e) => setChapterInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") addChapter(t.id); }} style={{ ...inputStyle, flex: 1, padding: "7px 9px", fontSize: 13 }} />
               <button onClick={() => addChapter(t.id)} style={{ ...ghostBtn, padding: "7px 10px" }}>Add</button>
             </div>
           </div>
@@ -1373,23 +770,12 @@ function TestsTab({ coachingTests, visibleSubjects, user }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-        <div style={{ fontSize: 13, color: C.inkSoft }}>
-          {upcoming.length === 0 ? "No upcoming tests" : `${upcoming.length} upcoming`}
-        </div>
-        <button onClick={() => setShowForm(s => !s)} style={solidPillBtn}>
-          <Plus size={15} /> Add test
-        </button>
+        <div style={{ fontSize: 13, color: C.inkSoft }}>{upcoming.length === 0 ? "No upcoming tests" : `${upcoming.length} upcoming`}</div>
+        <button onClick={() => setShowForm(s => !s)} style={solidPillBtn}><Plus size={15} /> Add test</button>
       </div>
-
       {showForm && (
         <div style={formCard}>
-          <input
-            autoFocus
-            placeholder="Test name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            style={inputStyle}
-          />
+          <input autoFocus placeholder="Test name" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
           <div style={{ display: "flex", gap: 8 }}>
             <select value={subject} onChange={(e) => setSubject(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
               {visibleSubjects.length === 0 && <option value="">General</option>}
@@ -1403,22 +789,13 @@ function TestsTab({ coachingTests, visibleSubjects, user }) {
           </div>
         </div>
       )}
-
-      {upcoming.length === 0 && past.length === 0 && !showForm ? (
-        <EmptyState text="Add your next coaching test and list the chapters." />
-      ) : (
+      {upcoming.length === 0 && past.length === 0 && !showForm ? <EmptyState text="Add your next coaching test and list the chapters." /> : (
         <>
-          {upcoming.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: past.length ? 18 : 0 }}>
-              {upcoming.map(renderTest)}
-            </div>
-          )}
+          {upcoming.length > 0 && <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: past.length ? 18 : 0 }}>{upcoming.map(renderTest)}</div>}
           {past.length > 0 && (
             <div>
               <div style={{ fontSize: 12, color: C.inkSoft, marginBottom: 8 }}>Past tests</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, opacity: 0.7 }}>
-                {past.map(renderTest)}
-              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, opacity: 0.7 }}>{past.map(renderTest)}</div>
             </div>
           )}
         </>
@@ -1446,11 +823,7 @@ function ProgressTab({ subjects, visibleSubjects, examFocus, mocks, user, viewMo
     setNewSubjectName("");
     setShowSubjectForm(false);
   };
-
-  const removeSubject = async (id) => {
-    await deleteItem("subjects", id);
-  };
-
+  const removeSubject = async (id) => { await deleteItem("subjects", id); };
   const addChapter = async (subjectId) => {
     if (!chapterInput.trim()) return;
     const subj = subjects.find(s => s.id === subjectId);
@@ -1458,19 +831,16 @@ function ProgressTab({ subjects, visibleSubjects, examFocus, mocks, user, viewMo
     await updateItem("subjects", subjectId, { chapters: newChapters });
     setChapterInput("");
   };
-
   const toggleChapter = async (subjectId, chapterId) => {
     const subj = subjects.find(s => s.id === subjectId);
     const newChapters = subj.chapters.map(c => c.id === chapterId ? { ...c, done: !c.done } : c);
     await updateItem("subjects", subjectId, { chapters: newChapters });
   };
-
   const removeChapter = async (subjectId, chapterId) => {
     const subj = subjects.find(s => s.id === subjectId);
     const newChapters = subj.chapters.filter(c => c.id !== chapterId);
     await updateItem("subjects", subjectId, { chapters: newChapters });
   };
-
   const addMock = async () => {
     const score = parseFloat(mockScore);
     const max = parseFloat(mockMax);
@@ -1479,10 +849,7 @@ function ProgressTab({ subjects, visibleSubjects, examFocus, mocks, user, viewMo
     setMockScore("");
     setShowMockForm(false);
   };
-
-  const removeMock = async (id) => {
-    await deleteItem("mocks", id);
-  };
+  const removeMock = async (id) => { await deleteItem("mocks", id); };
 
   const relevantMocks = mocks.filter(m => examFocus === "Both" || m.exam === examFocus).sort((a, b) => new Date(a.date) - new Date(b.date));
   const recentMocks = relevantMocks.slice(-8);
@@ -1494,34 +861,23 @@ function ProgressTab({ subjects, visibleSubjects, examFocus, mocks, user, viewMo
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
         <div style={{ fontSize: 13, color: C.inkSoft }}>Mock tests</div>
         <div style={{ display: "flex", gap: 6 }}>
-          {friendUID && (
-            <div style={{ display: "flex", gap: 4 }}>
-              <button onClick={() => setViewMode("mine")} style={pillBtn(viewMode === "mine")}>My</button>
-              <button onClick={() => setViewMode("friend")} style={pillBtn(viewMode === "friend")}>Friend</button>
-            </div>
-          )}
-          <button onClick={() => setShowMockForm(s => !s)} style={solidPillBtn}>
-            <Plus size={15} /> Log score
-          </button>
+          {friendUID && <div style={{ display: "flex", gap: 4 }}>
+            <button onClick={() => setViewMode("mine")} style={pillBtn(viewMode === "mine")}>My</button>
+            <button onClick={() => setViewMode("friend")} style={pillBtn(viewMode === "friend")}>Friend</button>
+          </div>}
+          <button onClick={() => setShowMockForm(s => !s)} style={solidPillBtn}><Plus size={15} /> Log score</button>
         </div>
       </div>
-
       <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
         <StatCard label="Best" value={bestPct !== null ? `${bestPct.toFixed(0)}%` : "—"} />
         <StatCard label="Average" value={avgPct !== null ? `${avgPct.toFixed(0)}%` : "—"} />
         <StatCard label="Tests" value={relevantMocks.length} />
       </div>
-
       {showMockForm && (
         <div style={formCard}>
           <div style={{ display: "flex", gap: 8 }}>
-            <select
-              value={mockExam}
-              onChange={(e) => { setMockExam(e.target.value); setMockMax(e.target.value === "NEET" ? "720" : "300"); }}
-              style={{ ...inputStyle, flex: 1 }}
-            >
-              <option value="NEET">NEET</option>
-              <option value="JEE">JEE</option>
+            <select value={mockExam} onChange={(e) => { setMockExam(e.target.value); setMockMax(e.target.value === "NEET" ? "720" : "300"); }} style={{ ...inputStyle, flex: 1 }}>
+              <option value="NEET">NEET</option><option value="JEE">JEE</option>
             </select>
             <input type="date" value={mockDate} onChange={(e) => setMockDate(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
           </div>
@@ -1535,79 +891,34 @@ function ProgressTab({ subjects, visibleSubjects, examFocus, mocks, user, viewMo
           </div>
         </div>
       )}
-
       {recentMocks.length > 0 && (
-        <div style={{
-          display: "flex",
-          alignItems: "flex-end",
-          gap: 6,
-          height: 90,
-          background: C.paperRaised,
-          border: `1px solid ${C.line}`,
-          borderRadius: 10,
-          padding: "10px 10px 8px",
-          marginBottom: 16
-        }}>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 90, background: C.paperRaised, border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 10px 8px", marginBottom: 16 }}>
           {recentMocks.map(m => {
             const pct = (m.score / m.max) * 100;
-            return (
-              <div
-                key={m.id}
-                title={`${m.date} · ${pct.toFixed(0)}%`}
-                style={{
-                  flex: 1,
-                  height: `${Math.max(6, pct)}%`,
-                  background: m.exam === "NEET" ? C.sage : C.clay,
-                  borderRadius: "3px 3px 0 0",
-                }}
-              />
-            );
+            return <div key={m.id} title={`${m.date} · ${pct.toFixed(0)}%`} style={{ flex: 1, height: `${Math.max(6, pct)}%`, background: m.exam === "NEET" ? C.sage : C.clay, borderRadius: "3px 3px 0 0" }} />;
           })}
         </div>
       )}
-
       {relevantMocks.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 22 }}>
           {[...relevantMocks].reverse().slice(0, 5).map(m => (
-            <div key={m.id} style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              fontSize: 13,
-              padding: "6px 2px",
-              borderBottom: `1px solid ${C.line}`
-            }}>
+            <div key={m.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, padding: "6px 2px", borderBottom: `1px solid ${C.line}` }}>
               <span style={{ color: C.inkSoft }}>{m.date} · {m.exam}</span>
               <span>{m.score}/{m.max} ({((m.score / m.max) * 100).toFixed(0)}%)</span>
-              <button onClick={() => removeMock(m.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.inkSoft }}>
-                <X size={14} />
-              </button>
+              <button onClick={() => removeMock(m.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.inkSoft }}><X size={14} /></button>
             </div>
           ))}
         </div>
       )}
-
-      {/* Syllabus */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
         <div style={{ fontSize: 13, color: C.inkSoft }}>Syllabus</div>
-        <button onClick={() => setShowSubjectForm(s => !s)} style={ghostBtn}>
-          <Plus size={14} /> Add subject
-        </button>
+        <button onClick={() => setShowSubjectForm(s => !s)} style={ghostBtn}><Plus size={14} /> Add subject</button>
       </div>
-
       {showSubjectForm && (
         <div style={formCard}>
-          <input
-            autoFocus
-            placeholder="Subject name"
-            value={newSubjectName}
-            onChange={(e) => setNewSubjectName(e.target.value)}
-            style={inputStyle}
-          />
+          <input autoFocus placeholder="Subject name" value={newSubjectName} onChange={(e) => setNewSubjectName(e.target.value)} style={inputStyle} />
           <select value={newSubjectExam} onChange={(e) => setNewSubjectExam(e.target.value)} style={inputStyle}>
-            <option value="NEET">NEET</option>
-            <option value="JEE">JEE</option>
-            <option value="Both">Both</option>
+            <option value="NEET">NEET</option><option value="JEE">JEE</option><option value="Both">Both</option>
           </select>
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
             <button onClick={() => setShowSubjectForm(false)} style={ghostBtn}>Cancel</button>
@@ -1615,7 +926,6 @@ function ProgressTab({ subjects, visibleSubjects, examFocus, mocks, user, viewMo
           </div>
         </div>
       )}
-
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {visibleSubjects.map(s => {
           const chapters = s.chapters || [];
@@ -1623,73 +933,29 @@ function ProgressTab({ subjects, visibleSubjects, examFocus, mocks, user, viewMo
           const pct = chapters.length ? Math.round((doneCount / chapters.length) * 100) : 0;
           const open = openSubjectId === s.id;
           return (
-            <div key={s.id} style={{
-              background: C.paperRaised,
-              border: `1px solid ${C.line}`,
-              borderLeft: `3px solid ${colorForSubject(s.name, subjects)}`,
-              borderRadius: 8,
-            }}>
-              <button
-                onClick={() => setOpenSubjectId(open ? null : s.id)}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "10px 12px",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  textAlign: "left"
-                }}
-              >
+            <div key={s.id} style={{ background: C.paperRaised, border: `1px solid ${C.line}`, borderLeft: `3px solid ${colorForSubject(s.name, subjects)}`, borderRadius: 8 }}>
+              <button onClick={() => setOpenSubjectId(open ? null : s.id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
                 {open ? <ChevronDown size={16} color={C.inkSoft} /> : <ChevronRight size={16} color={C.inkSoft} />}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, color: C.ink }}>{s.name}</div>
-                  <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>
-                    {chapters.length ? `${doneCount}/${chapters.length} chapters` : "no chapters"}
-                  </div>
+                  <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{chapters.length ? `${doneCount}/${chapters.length} chapters` : "no chapters"}</div>
                 </div>
-                <div style={{ width: 60, height: 6, background: C.line, borderRadius: 4, overflow: "hidden" }}>
-                  <div style={{ width: `${pct}%`, height: "100%", background: colorForSubject(s.name, subjects) }} />
-                </div>
-                <span
-                  onClick={(e) => { e.stopPropagation(); removeSubject(s.id); }}
-                  style={{ color: C.inkSoft, cursor: "pointer", display: "flex" }}
-                >
-                  <Trash2 size={15} />
-                </span>
+                <div style={{ width: 60, height: 6, background: C.line, borderRadius: 4, overflow: "hidden" }}><div style={{ width: `${pct}%`, height: "100%", background: colorForSubject(s.name, subjects) }} /></div>
+                <span onClick={(e) => { e.stopPropagation(); removeSubject(s.id); }} style={{ color: C.inkSoft, cursor: "pointer", display: "flex" }}><Trash2 size={15} /></span>
               </button>
               {open && (
                 <div style={{ padding: "0 12px 12px" }}>
-                  {chapters.length > 0 && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
-                      {chapters.map(c => (
-                        <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <button
-                            onClick={() => toggleChapter(s.id, c.id)}
-                            style={{ background: "none", border: "none", cursor: "pointer", color: c.done ? C.green : C.inkSoft }}
-                          >
-                            {c.done ? <CheckCircle2 size={17} /> : <Circle size={17} />}
-                          </button>
-                          <span style={{ flex: 1, fontSize: 13, textDecoration: c.done ? "line-through" : "none", opacity: c.done ? 0.6 : 1 }}>
-                            {c.name}
-                          </span>
-                          <button onClick={() => removeChapter(s.id, c.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.inkSoft }}>
-                            <X size={13} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {chapters.length > 0 && <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
+                    {chapters.map(c => (
+                      <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <button onClick={() => toggleChapter(s.id, c.id)} style={{ background: "none", border: "none", cursor: "pointer", color: c.done ? C.green : C.inkSoft }}>{c.done ? <CheckCircle2 size={17} /> : <Circle size={17} />}</button>
+                        <span style={{ flex: 1, fontSize: 13, textDecoration: c.done ? "line-through" : "none", opacity: c.done ? 0.6 : 1 }}>{c.name}</span>
+                        <button onClick={() => removeChapter(s.id, c.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.inkSoft }}><X size={13} /></button>
+                      </div>
+                    ))}
+                  </div>}
                   <div style={{ display: "flex", gap: 6 }}>
-                    <input
-                      placeholder="Add a chapter"
-                      value={chapterInput}
-                      onChange={(e) => setChapterInput(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") addChapter(s.id); }}
-                      style={{ ...inputStyle, flex: 1, padding: "7px 9px", fontSize: 13 }}
-                    />
+                    <input placeholder="Add a chapter" value={chapterInput} onChange={(e) => setChapterInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") addChapter(s.id); }} style={{ ...inputStyle, flex: 1, padding: "7px 9px", fontSize: 13 }} />
                     <button onClick={() => addChapter(s.id)} style={{ ...ghostBtn, padding: "7px 10px" }}>Add</button>
                   </div>
                 </div>
@@ -1705,14 +971,7 @@ function ProgressTab({ subjects, visibleSubjects, examFocus, mocks, user, viewMo
 
 function StatCard({ label, value }) {
   return (
-    <div style={{
-      flex: 1,
-      background: C.paperRaised,
-      border: `1px solid ${C.line}`,
-      borderRadius: 10,
-      padding: "10px 12px",
-      textAlign: "center"
-    }}>
+    <div style={{ flex: 1, background: C.paperRaised, border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 12px", textAlign: "center" }}>
       <div style={{ fontFamily: DISPLAY_FONT, fontSize: 20 }}>{value}</div>
       <div style={{ fontSize: 11, color: C.inkSoft, marginTop: 2 }}>{label}</div>
     </div>
@@ -1725,9 +984,7 @@ function NotesTab({ notes, subjects, user }) {
   const [subject, setSubject] = useState(subjects[0]?.name || "General");
   const [text, setText] = useState("");
 
-  useEffect(() => {
-    if (subjects[0] && subject === "General") setSubject(subjects[0].name);
-  }, [subjects]);
+  useEffect(() => { if (subjects[0] && subject === "General") setSubject(subjects[0].name); }, [subjects]);
 
   const addNote = async () => {
     if (!text.trim()) return;
@@ -1735,60 +992,34 @@ function NotesTab({ notes, subjects, user }) {
     setText("");
     setShowForm(false);
   };
-
-  const remove = async (id) => {
-    await deleteItem("notes", id);
-  };
+  const remove = async (id) => { await deleteItem("notes", id); };
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-        <div style={{ fontSize: 13, color: C.inkSoft }}>
-          {notes.length === 0 ? "No notes yet" : `${notes.length} saved`}
-        </div>
-        <button onClick={() => setShowForm(s => !s)} style={solidPillBtn}>
-          <Plus size={15} /> Add note
-        </button>
+        <div style={{ fontSize: 13, color: C.inkSoft }}>{notes.length === 0 ? "No notes yet" : `${notes.length} saved`}</div>
+        <button onClick={() => setShowForm(s => !s)} style={solidPillBtn}><Plus size={15} /> Add note</button>
       </div>
-
       {showForm && (
         <div style={formCard}>
           <select value={subject} onChange={(e) => setSubject(e.target.value)} style={inputStyle}>
             <option value="General">General</option>
             {subjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
           </select>
-          <textarea
-            autoFocus
-            placeholder="A formula, a tricky NCERT line, an exam tip…"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={4}
-            style={{ ...inputStyle, resize: "vertical", fontFamily: BODY_FONT }}
-          />
+          <textarea autoFocus placeholder="A formula, a tricky NCERT line, an exam tip…" value={text} onChange={(e) => setText(e.target.value)} rows={4} style={{ ...inputStyle, resize: "vertical", fontFamily: BODY_FONT }} />
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
             <button onClick={() => setShowForm(false)} style={ghostBtn}>Cancel</button>
             <button onClick={addNote} style={solidBtn}>Save</button>
           </div>
         </div>
       )}
-
-      {notes.length === 0 && !showForm ? (
-        <EmptyState text="Save a formula, an NCERT line, or a mistake you keep making in mocks." />
-      ) : (
+      {notes.length === 0 && !showForm ? <EmptyState text="Save a formula, an NCERT line, or a mistake you keep making in mocks." /> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {notes.map(n => (
-            <div key={n.id} style={{
-              background: C.paperRaised,
-              border: `1px solid ${C.line}`,
-              borderLeft: `3px solid ${colorForSubject(n.subject, subjects)}`,
-              borderRadius: 8,
-              padding: "10px 12px"
-            }}>
+            <div key={n.id} style={{ background: C.paperRaised, border: `1px solid ${C.line}`, borderLeft: `3px solid ${colorForSubject(n.subject, subjects)}`, borderRadius: 8, padding: "10px 12px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                 <span style={{ fontSize: 12, color: C.inkSoft }}>{n.subject} · {n.date}</span>
-                <button onClick={() => remove(n.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.inkSoft }}>
-                  <X size={14} />
-                </button>
+                <button onClick={() => remove(n.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.inkSoft }}><X size={14} /></button>
               </div>
               <div style={{ fontSize: 14, whiteSpace: "pre-wrap" }}>{n.text}</div>
             </div>
@@ -1818,59 +1049,25 @@ function SettingsTab({ user, friendUID, setFriendUID }) {
           <div style={{ fontSize: 12, color: C.inkSoft }}>v1.0 · K24 Edition</div>
         </div>
       </div>
-
       <h4 style={{ fontFamily: DISPLAY_FONT, marginBottom: 8 }}>Connect with a friend</h4>
-      <p style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
-        Enter your friend's UID (they can find it below) to see their tasks and focus time in real-time.
-      </p>
+      <p style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>Enter your friend's UID (they can find it below) to see their tasks and focus time in real-time.</p>
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <input
-          value={inputUID}
-          onChange={(e) => setInputUID(e.target.value)}
-          placeholder="Friend's UID"
-          style={{ flex: 1, padding: 8, border: `1px solid ${C.line}`, borderRadius: 6 }}
-        />
+        <input value={inputUID} onChange={(e) => setInputUID(e.target.value)} placeholder="Friend's UID" style={{ flex: 1, padding: 8, border: `1px solid ${C.line}`, borderRadius: 6 }} />
         <button onClick={saveFriend} style={solidBtn}>Save</button>
       </div>
-      {friendUID && (
-        <div style={{ marginTop: 8, fontSize: 13, color: C.sage }}>
-          ✓ Connected with friend
-        </div>
-      )}
+      {friendUID && <div style={{ marginTop: 8, fontSize: 13, color: C.sage }}>✓ Connected with friend</div>}
       <div style={{ marginTop: 20, fontSize: 12, color: C.inkSoft }}>
         Your UID: <strong style={{ color: C.ink }}>{user.uid}</strong> – share this with your friend.
       </div>
-      <div style={{ marginTop: 12, fontSize: 12, color: C.inkSoft }}>
-        After connecting, you can toggle between "My" and "Friend" views in Tasks and Progress tabs.
-      </div>
-
+      <div style={{ marginTop: 12, fontSize: 12, color: C.inkSoft }}>After connecting, you can toggle between "My" and "Friend" views in Tasks and Progress tabs.</div>
       <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${C.line}` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center", opacity: 0.4 }}>
-          <div style={{
-            width: 20,
-            height: 20,
-            borderRadius: "50%",
-            background: `linear-gradient(135deg, ${C.sage}, ${C.gold})`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}>
-            <span style={{
-              fontFamily: DISPLAY_FONT,
-              fontSize: 8,
-              fontWeight: "bold",
-              color: "#FFFFFF",
-            }}>
-              K24
-            </span>
+          <div style={{ width: 20, height: 20, borderRadius: "50%", background: `linear-gradient(135deg, ${C.sage}, ${C.gold})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontFamily: DISPLAY_FONT, fontSize: 8, fontWeight: "bold", color: "#FFFFFF" }}>K24</span>
           </div>
-          <span style={{ fontFamily: DISPLAY_FONT, fontSize: 11, color: C.inkSoft }}>
-            Focus Prep · Made with 🎯
-          </span>
+          <span style={{ fontFamily: DISPLAY_FONT, fontSize: 11, color: C.inkSoft }}>Focus Prep · Made with 🎯</span>
         </div>
       </div>
     </div>
   );
 }
-
-export default App;
